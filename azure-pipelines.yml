@@ -1,0 +1,68 @@
+# Starter pipeline
+# Start with a minimal pipeline that you can customize to build and deploy your code.
+# Add steps that build, run tests, deploy, and more:
+# https://aka.ms/yaml
+
+trigger:
+- master
+
+pool:
+  vmImage: ubuntu-latest
+
+variables:
+  buildConfiguration: 'Release'
+  buildOutput: 'build'
+
+# set Build.BuildNumber
+name: $(Date:yyyy).$(Date:Mdd)$(Rev:.r)-$(Build.SourceBranchName)
+
+steps:
+- task: NodeTool@0
+  inputs:
+    versionSpec: '12.x'
+  displayName: 'Install Node.js'
+
+- task: OctoInstaller@4
+  inputs:
+    version: 'embedded'
+
+- script: |
+    npm i
+    npm run build
+    npm test
+  displayName: 'npm install and build'
+  
+- task: PublishTestResults@2
+  inputs:
+    testResultsFormat: 'JUnit'
+    testResultsFiles: '**/TEST-*.xml'
+
+- task: OctopusPack@4
+  inputs:
+    PackageId: 'react-boilerplate'
+    PackageFormat: 'Zip'
+    PackageVersion: '$(Build.BuildNumber)'
+    SourcePath: 'dist'
+    OutputPath: '$(Build.ArtifactStagingDirectory)/packages'
+
+- task: OctopusPush@4
+  inputs:
+    OctoConnectedServiceName: 'ycap.octopus.app'
+    Space: 'Spaces-1'
+    Package: '$(Build.ArtifactStagingDirectory)/packages/*.zip'
+    Replace: 'false'
+
+- task: OctopusMetadata@4
+  inputs:
+    OctoConnectedServiceName: 'ycap.octopus.app'
+    Space: 'Spaces-1'
+    PackageId: 'react-boilerplate'
+    PackageVersion: '$(Build.BuildNumber)'
+    Replace: 'false'
+
+- task: PublishBuildArtifacts@1
+  inputs:
+    PathtoPublish: '$(Build.ArtifactStagingDirectory)'
+    ArtifactName: '$(Build.BuildNumber)'
+    publishLocation: 'Container'
+
