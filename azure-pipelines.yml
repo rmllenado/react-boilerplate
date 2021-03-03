@@ -39,7 +39,7 @@ steps:
 
 - task: OctopusPack@4
   inputs:
-    PackageId: 'react-boilerplate'
+    PackageId: '$(package.id)'
     PackageFormat: 'Zip'
     PackageVersion: '$(Build.BuildNumber)'
     SourcePath: 'dist'
@@ -56,7 +56,7 @@ steps:
   inputs:
     OctoConnectedServiceName: 'ycap.octopus.app'
     Space: 'Spaces-1'
-    PackageId: 'react-boilerplate'
+    PackageId: '$(package.id)'
     PackageVersion: '$(Build.BuildNumber)'
     Replace: 'false'
 
